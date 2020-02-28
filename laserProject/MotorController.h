@@ -7,16 +7,15 @@
 
 class MotorController {
 public:
-    MotorController(ushort slaveid) { m_slaveid = slaveid; }
-    ~MotorController() { close(); }
-
+    MotorController(ushort slaveid);
+    ~MotorController();
     void open(std::string const& portname);
     void stop();
     void jogFW();
     void jogBW();
     void setPos(double angle);    //close device
     void close();
-    bool connected()const { return m_connected; }
+    bool connected()const;
     void userPort(MotorController const & motorcon);
 
 

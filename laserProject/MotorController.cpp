@@ -64,9 +64,7 @@
         }
         else std::cout << "port not connected" << endl;
     }
-    double MotorController::readAngle() const {
-        
-    }
+    
     //close device
     void MotorController::close() { if (m_connected) m_port.ClosePort(); }
 

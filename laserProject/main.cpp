@@ -85,21 +85,19 @@ void main() {
     motor1.open("\\\\.\\COM26");
     motor2.userPort(motor1);
 
-    laser_dev.laserON();
     laser_dev.laserOFF();
-
-    motor1.setPos(70.1);
-    Sleep(1000);
-    motor1.setPos(50.12);
 
 
     cv::VideoCapture cap;
     cv::Mat originalImage = laserProject::takeImg(cap);
-    cv::Mat originalGray;
+    cv::Mat originalGray ;
+    cv::cvtColor(originalImage, originalGray, cv::COLOR_BGR2GRAY);
+
     cv::Mat thresholdImg;                  // mat to store thresholded img
     cv::Mat blurredOriginal;               //blurred image before thresholding to remove noise 
 
     int pickPointNumber = 8;
+    int laserThresh = 70;
     int minThresh = 100;
     int numOfContour = 6;
     int contourSize = 40;
@@ -107,49 +105,6 @@ void main() {
     double distance = 0;
     int currentPickedPoint = 0;
     int circleNum = 4;
-   
-
-    thresholdImg = laserProject::thresholdBlurredImage(originalImage, minThresh);
-    cv::imshow("thresh", thresholdImg);
-    cv::waitKey(0);
-
-    vector<vector<cv::Point>> contours;     //
-    cv::findContours(thresholdImg, contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE, cv::Point(0, 0));
-    std::sort(contours.begin(), contours.end(), [](const vector<cv::Point> &a, const vector<cv::Point> &b) {return a.size() < b.size(); });
-
-
-    //get the indexes of contours found 
-    vector<int> indexes = laserProject::findCircleContours(contours, originalImage, numOfContour, contourSize, contourArea);
-    //sort the contours according to the size
-
-    //ver contains the biggest ellipse points 
-    std::vector<cv::Point2f> ver = laserProject::findBiggestEllipse(contours, indexes);
-
-    cv::Point2f transformedRect[4] = { {0,0},{400,0},{400,400},{0,400} };
-    cv::Mat transformMat = cv::getPerspectiveTransform(ver.data(), transformedRect);
-    transformMat.convertTo(transformMat, CV_32F);
-
-    //contour[i] is the original contour of ellipse 
-    //4 circleContours Transformed with matrix T 
-
-    std::vector<vector<cv::Point2f>> circleContours(circleNum);
-    for (int i = 0; i < circleNum; i++) {
-        circleContours[i] = laserProject::transform2Dpoints(contours[indexes[i]], transformMat);
-    }
-    laserProject::myCircle circleThroughCenters = laserProject::findCircleWithCenters(circleContours);
-
-
-    //circPoin2f is the picked points to check distance 
-    std::vector<cv::Point2f> circPoint2f = laserProject::returnCirclePoints(pickPointNumber, circleThroughCenters);
-    std::vector<cv::Point2f>pickPointsOriginal = laserProject::transform2Dpoints(circPoint2f, transformMat.inv());
-    
-
-
-    if (!cap.isOpened()) {
-        cap.open(0);
-    }
-    //distance from laser to the circle points 
-
     float kp1 = 1;
     float kp2 = 1;
     float ki1 = 0.05;
@@ -157,19 +112,67 @@ void main() {
     float int_errX = 0;
     float int_errY = 0;
 
+    thresholdImg = laserProject::thresholdBlurredImage(originalImage, minThresh);
+    cv::imshow("thresh", thresholdImg);
+    cv::waitKey(0);
 
-    cv::Mat img;
+    //with the threshold image get contours (sorted)
+    vector<vector<cv::Point>> contours = laserProject::getContoursSorted(thresholdImg);
+
+    //get the indexes of contours found 
+    vector<int> indexes = laserProject::findCircleContoursIndexes(contours,numOfContour, contourSize, contourArea);
+    //sort the contours according to the size
+
+    cv::Mat transformMat = laserProject::findTmatrixWithEllipse(contours, numOfContour, contourSize, contourArea);
+    //contour[i] is the original contour of ellipse 
+    //4 circleContours Transformed with matrix T 
+
+    laserProject::myCircle circleThroughCenters = laserProject::getCircleWithCenters(contours,transformMat,indexes,circleNum);
+    //circPoin2f is the picked points to check distance 
+    std::vector<cv::Point2f> circPoint2f = laserProject::returnCirclePoints(pickPointNumber, circleThroughCenters);
+    std::vector<cv::Point2f>pickPointsOriginal = laserProject::transform2Dpoints(circPoint2f, transformMat.inv());
+
+    
+    if (!cap.isOpened()) {
+        cap.open(0);
+    }
+    //distance from laser to the circle points 
+
+    laser_dev.laserON();
+
     for (;;) {
         //1. capture image
-        //img = captureImage();
-        //2. calculate laser point poisition 
-        ///
-        //3. compute angle diff
-        //
-        //4. move
-        //
-        //move1.setPos(new_theta1);
-        //move2.setPos(new_theta2);
+        cv::Mat frame;
+        cap >> frame;
+         
+        vector<vector<cv::Point>> laserContour = laserProject::getLaserContour(frame, originalGray, laserThresh);
+        if (laserContour.size() != 1 || laserContour.size() > 1) {
+            cout << "more than 1 contour found" << endl;
+            continue;
+        }
+         
+        cv::Point2f transformedLaserCenter = laserProject::getTransformedLaserCenter(laserContour[0], transformMat);
+        cv::Point2f originalLaserCenter = laserProject::getOriginalLaserCenter(transformedLaserCenter, transformMat);
+        
+        // check 1st one 
+        //x is [0] y is [1]
+        std::vector<float> distance = laserProject::distanceInOriginal(originalLaserCenter, pickPointsOriginal[0]);
+        cout << distance[1] << endl; 
+
+     
+        /*                 for debugging  viewing scene                                 */
+        cv::Mat transformedImg;
+        cv::Mat transformedImgRGB;
+        cv::Mat laserGray;
+        cv::cvtColor(frame, laserGray, cv::COLOR_BGR2GRAY);
+        transformedImg.create(originalGray.size(), CV_8UC1);
+        cv::warpPerspective(laserGray, transformedImg, transformMat, transformedImg.size());
+        cv::cvtColor(transformedImg, transformedImgRGB, cv::COLOR_GRAY2RGB);
+        cv::circle(transformedImgRGB, circleThroughCenters.center, circleThroughCenters.radius, cv::Scalar(250, 0, 0), 2);
+        cv::circle(transformedImgRGB, transformedLaserCenter, 1, cv::Scalar(0, 0, 250), 2);
+
+        cv::imshow("warped image",transformedImgRGB);
+        /*                                                                             */
 
         if (cv::waitKey(1) == 'q')break;
     }
@@ -346,7 +349,7 @@ int main(void)
             continue;
 
         std::vector<cv::Point2f> transformedPoints = laserProject::transform2Dpoints(laserContour[0], transformMat);
-
+        
         cv::cvtColor(transformedImg, transformedImgRGB, cv::COLOR_GRAY2RGB);
         cv::circle(transformedImgRGB, circleThroughCenters.center, circleThroughCenters.radius, cv::Scalar(250, 0, 0), 2);
 
@@ -354,7 +357,7 @@ int main(void)
         cv::Moments cen = cv::moments(transformedPoints);
         float cx = cen.m10 / cen.m00;
         float cy = cen.m01 / cen.m00;
-
+        
 
         distance = sqrt(pow(circPoint2f[currentPickedPoint].x - cx, 2) + pow((circPoint2f[currentPickedPoint].y - cy), 2));
         /*cout << "distance to the circle" << endl;

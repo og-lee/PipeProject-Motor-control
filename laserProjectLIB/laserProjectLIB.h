@@ -13,7 +13,7 @@
 
 using namespace std;
 
-namespace laserProject{
+namespace laserProject {
 
     class myCircle {
     public:
@@ -24,11 +24,11 @@ namespace laserProject{
         myCircle(const myCircle& other) :center(other.center), radius(other.radius) {}
     };
 
-	void printMes();
-	cv::Mat takeImg(cv::VideoCapture capture);
+    void printMes();
+    cv::Mat takeImg(cv::VideoCapture capture);
 
     //find the contours and then push back the indexs of possible contours of ellipse 
-	vector<int> findCircleContours(vector<vector<cv::Point>>const& contour,cv::Mat const& originalImg,int numOfContour,int contourSize,int contourArea);
+    vector<int> findCircleContoursIndexes(vector<vector<cv::Point>>const& contour, int numOfContour, int contourSize, int contourArea);
 
     //check the circularity of the contours 
     bool checkCircularity(vector<cv::Point>const &contour);
@@ -41,24 +41,34 @@ namespace laserProject{
     std::vector<cv::Point3f> makeHomogeneous(std::vector<cv::Point2f> const & contour);
 
     //return the contour transformed
-    std::vector<cv::Point2f> transform2Dpoints(std::vector<cv::Point> const& contour,cv::Mat const& T);
-    std::vector<cv::Point2f> transform2Dpoints(std::vector<cv::Point2f> const& contour,cv::Mat const& T);
+    std::vector<cv::Point2f> transform2Dpoints(std::vector<cv::Point> const& contour, cv::Mat const& T);
+    std::vector<cv::Point2f> transform2Dpoints(std::vector<cv::Point2f> const& contour, cv::Mat const& T);
 
-    void drawWithContour(const std::vector<cv::Point2f>& pt,const cv::Mat& img, const char* str);
-    
+    void drawWithContour(const std::vector<cv::Point2f>& pt, const cv::Mat& img, const char* str);
+
     //fit the contours to circle and find the circle passing the centers of the contours  
     myCircle findCircleWithCenters(const std::vector<vector<cv::Point2f>> contours);
-    
+
     std::vector<cv::Point2f> returnCirclePoints(int numberOfPoints, const myCircle& circ);
 
-    cv::Mat thresholdBlurredImage(const cv::Mat& original,int minThresh);
+    cv::Mat thresholdBlurredImage(const cv::Mat& original, int minThresh);
 
-    cv::Mat getTransformMatFromEllipse(const cv::Mat& thresholdImg) {
-        std::vector<std::vector<cv::Point>> contours;
-        cv::findContours(thresholdImg, contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE, cv::Point(0, 0));
-        std::sort(contours.begin(), contours.end(), [](const vector<cv::Point> &a, const vector<cv::Point> &b) {return a.size() < b.size(); });
-        
-    }
+    //contours sorted by size
+    std::vector<std::vector<cv::Point>> getContoursSorted(const cv::Mat& thresholdImg);
+
+    //
+    cv::Mat findTmatrixWithEllipse(std::vector<std::vector<cv::Point>> contours, int numOfContour, int contourSize, int contourArea);
+
+    myCircle getCircleWithCenters(const std::vector<std::vector<cv::Point>>& contours,const cv::Mat& tmatrix,std::vector<int> indexes,int circleNum);
+
+    //get frame and return laser Center int warped image
+    vector<vector<cv::Point>> getLaserContour(const cv::Mat& frame,const cv::Mat& originalGray,int threshVal);
+
+    cv::Point2f getTransformedLaserCenter(const vector<cv::Point>& laserContour, const cv::Mat& tmatrix);
+
+    cv::Point2f getOriginalLaserCenter(const cv::Point2f& targetPoint, const cv::Mat& tMat);
+
+    std::vector<float> distanceInOriginal(cv::Point2f pt1, cv::Point2f pt2);
 }
 
 
