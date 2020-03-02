@@ -221,8 +221,8 @@ namespace laserProject {
         cv::findContours(laserBinary, laserContour, cv::RETR_LIST, cv::CHAIN_APPROX_NONE, cv::Point(0, 0));
 
         /* check image*/
-        cv::imshow("binary", laserBinary);
-        cv::imshow("gray", laserImageGray);
+        //cv::imshow("binary", laserBinary);
+        //cv::imshow("gray", laserImageGray);
 
         return laserContour;
 

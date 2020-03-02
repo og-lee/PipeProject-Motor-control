@@ -82,11 +82,39 @@ protected:
 
 
 
-void main() {
-    cv::Mat frame;
+int main() {
+    
     cv::VideoCapture cap;
-    cap >> frame;
-    cv::imshow("frame", frame);
+    LaserRangeFinder laser;
+    laser.open("\\\\.\\COM27");
+    Sleep(10);
+    if (!cap.open(0))
+        return 0;
+    for (;;) {
+        cv::Mat grayimg;
+        cv::Mat laserOFFimg;
+        cv::Mat laserONimg;
+        laser.laserOFF();
+        Sleep(300);
+        cap >> laserOFFimg;
+        laser.laserON();
+        Sleep(300);
+        cap >> laserONimg;
+
+
+       /* cv::cvtColor(laserOFFimg, grayimg, cv::COLOR_BGR2GRAY);
+        vector<vector<cv::Point>> contour = laserProject::getLaserContour(laserONimg, grayimg, 50);
+        if (contour.size() != 0) {
+            cout << "contour Size : " << contour.size() << endl;
+            cout << contour[0].size() << endl;
+        }
+        else {
+            cout << "contour not found" << endl;
+        }
+
+        if (cv::waitKey(1) == 27) break;*/
+
+    }
 
 }
 
