@@ -259,4 +259,12 @@ namespace laserProject {
         distance[1] = distY;
         return distance;
     }
+
+    void checkLaser(const cv::Mat& img, int minThreshold) {
+        //check the brighest part in the image
+        cv::Mat result;
+        cv::cvtColor(img, result, cv::COLOR_BGR2GRAY);
+        cv::threshold(result, result, minThreshold, 255, cv::THRESH_BINARY);
+        cv::imshow("find the brightest part", result);
+    }
 }

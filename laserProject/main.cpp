@@ -11,10 +11,16 @@
 #include "MotorController.h"
 #include "INAmessage.h"
 
+
 static int stepsX = 0;
 static std::atomic<int> stepsY = 0;
 static int absStepsX = 0;
 static int absStepsY = 0;
+
+
+// new things to update 
+// test with not subtracting images // just the laser on , can I detect laser ?? 
+// 
 
 #if 1
 
@@ -146,20 +152,31 @@ void main() {
         cv::Mat frame;
         cap >> frame;
          
+        // if laser contour not found then try again 
+        // if laser contour more than 1 found then use the biggest one 
+
         vector<vector<cv::Point>> laserContour = laserProject::getLaserContour(frame, originalGray, laserThresh);
-        if (laserContour.size() != 1 || laserContour.size() > 1) {
+        if (laserContour.size() == 0 ) {
             cout << "more than 1 contour found" << endl;
             continue;
         }
-         
-        cv::Point2f transformedLaserCenter = laserProject::getTransformedLaserCenter(laserContour[0], transformMat);
+        else if (laserContour.size() > 1) {
+            //sort the contour according to size
+            std::sort(laserContour.begin(), laserContour.end(), [](const vector<cv::Point> &a, const vector<cv::Point> &b) {return a.size() < b.size(); });
+        }
+
+        // then use the biggest contour  laserContour[laserContour.size()-1];
+        cv::Point2f transformedLaserCenter = laserProject::getTransformedLaserCenter(laserContour[laserContour.size()-1], transformMat);
         cv::Point2f originalLaserCenter = laserProject::getOriginalLaserCenter(transformedLaserCenter, transformMat);
         
         // check 1st one 
         //x is [0] y is [1]
         std::vector<float> distance = laserProject::distanceInOriginal(originalLaserCenter, pickPointsOriginal[0]);
         cout << distance[1] << endl; 
+        
 
+
+        
      
         /*                 for debugging  viewing scene                                 */
         cv::Mat transformedImg;
@@ -173,6 +190,7 @@ void main() {
         cv::circle(transformedImgRGB, transformedLaserCenter, 1, cv::Scalar(0, 0, 250), 2);
 
         cv::imshow("warped image",transformedImgRGB);
+
         /*                                                                             */
 
         if (cv::waitKey(1) == 'q')break;

@@ -7,6 +7,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "laserProject", "laserProjec
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "laserProjectLIB", "laserProjectLIB\laserProjectLIB.vcxproj", "{C76634DC-2219-40CB-ADAA-F9AFBB695203}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F96DCC57-7862-457F-8945-5ECFEBD7A7E3}"
+	ProjectSection(SolutionItems) = preProject
+		readMe.txt = readMe.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
