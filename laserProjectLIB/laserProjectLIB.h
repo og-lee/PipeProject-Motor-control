@@ -59,16 +59,18 @@ namespace laserProject {
     //
     cv::Mat findTmatrixWithEllipse(std::vector<std::vector<cv::Point>> contours, int numOfContour, int contourSize, int contourArea);
 
-    myCircle getCircleWithCenters(const std::vector<std::vector<cv::Point>>& contours,const cv::Mat& tmatrix,std::vector<int> indexes,int circleNum);
+    myCircle getCircleWithCenters(const std::vector<std::vector<cv::Point>>& contours, const cv::Mat& tmatrix, std::vector<int> indexes, int circleNum);
 
     //get frame and return laser Center int warped image
-    vector<vector<cv::Point>> getLaserContour(const cv::Mat& frame,const cv::Mat& originalGray,int threshVal);
+    vector<vector<cv::Point>> getLaserContour(const cv::Mat& frame, const cv::Mat& originalGray, int threshVal);
 
     cv::Point2f getTransformedLaserCenter(const vector<cv::Point>& laserContour, const cv::Mat& tmatrix);
 
     cv::Point2f getOriginalLaserCenter(const cv::Point2f& targetPoint, const cv::Mat& tMat);
 
     std::vector<float> distanceInOriginal(cv::Point2f pt1, cv::Point2f pt2);
+
+    //show the laser image by thresholding 
+    void checkLaser(const cv::Mat& img, int minThreshold);
+
 }
-
-

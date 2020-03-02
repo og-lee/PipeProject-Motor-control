@@ -75,3 +75,12 @@
         m_connected = motorcon.m_connected;
     }
 
+
+    double MotorController::readPos() {
+        if (m_connected) {
+
+
+        }
+        else std::cout << "port not connected" << endl;
+        return 0;
+    }

@@ -14,6 +14,7 @@ public:
     void jogFW();
     void jogBW();
     void setPos(double angle);    //close device
+    double readPos();
     void close();
     bool connected()const;
     void userPort(MotorController const & motorcon);
