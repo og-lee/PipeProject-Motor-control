@@ -45,6 +45,7 @@ namespace laserProject {
     std::vector<cv::Point2f> transform2Dpoints(std::vector<cv::Point2f> const& contour, cv::Mat const& T);
 
     void drawWithContour(const std::vector<cv::Point2f>& pt, const cv::Mat& img, const char* str);
+    void drawWithContourI(const std::vector<cv::Point>& pt, const cv::Mat& img, const char* str);
 
     //fit the contours to circle and find the circle passing the centers of the contours  
     myCircle findCircleWithCenters(const std::vector<vector<cv::Point2f>> contours);
@@ -72,5 +73,6 @@ namespace laserProject {
 
     //show the laser image by thresholding 
     void checkLaser(const cv::Mat& img, int minThreshold);
+    std::vector<std::vector<cv::Point>> getContoursSortedExternal(const cv::Mat& thresholdImg);
 
 }

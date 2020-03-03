@@ -47,10 +47,13 @@ namespace laserProject {
         {
             if (index.size() != numOfContour)
                 throw 0;
+            else
+                cout << "number of holes found " << index.size() << endl;;
         }
         catch (int x)
         {
             cout << "number of holes are not accurate" << endl;
+            cout << "number of holes found " << index.size() << endl;
         }
         catch (...) {
             cout << "default exception" << endl;
@@ -144,11 +147,16 @@ namespace laserProject {
 
     void drawWithContour(const std::vector<cv::Point2f>& pt, const cv::Mat& img, const char* str) {
         for (int i = 0; i < pt.size(); i++) {
-            cv::circle(img, pt[i], 1, cv::Scalar(0, 100, 250), 2);
+            cv::circle(img, pt[i], 1, cv::Scalar(0, 100, 250), 1);
         }
         //cv::imshow(str, img);
     }
-
+    void drawWithContourI(const std::vector<cv::Point>& pt, const cv::Mat& img, const char* str) {
+        for (int i = 0; i < pt.size(); i++) {
+            cv::circle(img, pt[i], 1, cv::Scalar(0, 100, 250), 1);
+        }
+        //cv::imshow(str, img);
+    }
 
     myCircle findCircleWithCenters(const std::vector<vector<cv::Point2f>> contours) {
         myCircle result;
@@ -188,7 +196,12 @@ namespace laserProject {
         std::sort(contours.begin(), contours.end(), [](const vector<cv::Point> &a, const vector<cv::Point> &b) {return a.size() < b.size(); });
         return contours;
     }
-
+    std::vector<std::vector<cv::Point>> getContoursSortedExternal(const cv::Mat& thresholdImg) {
+        std::vector<std::vector<cv::Point>> contours;
+        cv::findContours(thresholdImg, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE, cv::Point(0, 0));
+        std::sort(contours.begin(), contours.end(), [](const vector<cv::Point> &a, const vector<cv::Point> &b) {return a.size() < b.size(); });
+        return contours;
+    }
 
     cv::Mat findTmatrixWithEllipse(std::vector<std::vector<cv::Point>> contours, int numOfContour, int contourSize, int contourArea) {
 

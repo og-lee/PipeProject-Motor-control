@@ -79,11 +79,69 @@ protected:
 };
 
 
+struct Circle {
+    float x, y, r;
+    cv::Point center()const { return { (int)x,(int)y }; }
+    cv::Point2f centerf()const { return { x,y }; }
+};
+
+// Function to find the circle on 
+// which the given three points lie 
+Circle findCircle(int x1, int y1, int x2, int y2, int x3, int y3)
+{
+    float x12 = x1 - x2;
+    float x13 = x1 - x3;
+
+    float y12 = y1 - y2;
+    float y13 = y1 - y3;
+
+    float y31 = y3 - y1;
+    float y21 = y2 - y1;
+
+    float x31 = x3 - x1;
+    float x21 = x2 - x1;
+
+    // x1^2 - x3^2 
+    float sx13 = pow(x1, 2) - pow(x3, 2);
+
+    // y1^2 - y3^2 
+    float sy13 = pow(y1, 2) - pow(y3, 2);
+
+    float sx21 = pow(x2, 2) - pow(x1, 2);
+    float sy21 = pow(y2, 2) - pow(y1, 2);
+
+    float f = ((sx13) * (x12)
+        +(sy13) * (x12)
+        +(sx21) * (x13)
+        +(sy21) * (x13))
+        / (2 * ((y31) * (x12)-(y21) * (x13)));
+    float g = ((sx13) * (y12)
+        +(sy13) * (y12)
+        +(sx21) * (y13)
+        +(sy21) * (y13))
+        / (2 * ((x31) * (y12)-(x21) * (y13)));
+
+    float c = -pow(x1, 2) - pow(y1, 2) - 2 * g * x1 - 2 * f * y1;
+
+    // eqn of circle be x^2 + y^2 + 2*g*x + 2*f*y + c = 0 
+    // where centre is (h = -g, k = -f) and radius r 
+    // as r^2 = h^2 + k^2 - c 
+    float h = -g;
+    float k = -f;
+    float sqr_of_r = h * h + k * k - c;
+
+    // r is the radius 
+    float r = sqrt(sqr_of_r);
+
+    //cout << "Centre = (" << h << ", " << k << ")" << endl;
+    //cout << "Radius = " << r;
+    return { h,k,r };
+}
 
 
 
 int main() {
-    
+
     cv::VideoCapture cap;
     LaserRangeFinder laser;
     laser.open("\\\\.\\COM27");
@@ -94,60 +152,105 @@ int main() {
     cv::Mat roiImg;
     cap >> img;
     cv::Rect2d r = cv::selectROI(img);
-    
+
     //laser.laserON();
 
-    int min = 100;
-    int max = 200;
     for (;;) {
+        cv::Mat imgNoLaser;
+        cv::Mat imgWithLaser;
         cv::Mat gray;
-        cv::Mat binary;
-        cv::Mat img; 
+        cv::Mat img;
         cv::Mat rImg;
         cv::Mat gaussian;
-        cv::Mat median;
         cv::Mat cany;
-        cv::Mat cany1;
-        cv::Mat equ;
-        cap >> img;
-        rImg = img(r);
+
+        //laser.laserON();
+        //Sleep(200);
+        //cap >> imgWithLaser;
+        //cap >> imgWithLaser;
+        //laser.laserOFF();
+        //Sleep(200);
+        //cap >> imgNoLaser;
+        cap >> imgNoLaser;
+        rImg = imgNoLaser(r);
+
+
+        //imshow("no laser", imgNoLaser);
+        //imshow("with laser", imgWithLaser);
+        //cv::waitKey(1);
+
         cv::resize(rImg, rImg, cv::Size(0, 0), 3, 3);
 
         cv::cvtColor(rImg, gray, cv::COLOR_RGB2GRAY);
-        cv::GaussianBlur(gray, gaussian, cv::Size(3,3),2);
-        int cannyMin = 70;
-        int cannyMax = 150;
-        cv::Canny(gaussian, cany,cannyMin,cannyMax);
-        cv::adaptiveThreshold(gaussian, binary, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY,5,5);
 
+        cv::GaussianBlur(gray, gaussian, cv::Size(3, 3), 1);
+        int cannyMin = 80;
+        int cannyMax = 150;
+        int numOfContour = 6;
+        int contourSize = 20;
+        int contourArea = 100;
+
+        cv::Canny(gaussian, cany, cannyMin, cannyMax);
+        //cv::adaptiveThreshold(gaussian, binary, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY,5,5);
+        vector<vector<cv::Point>> contour = laserProject::getContoursSortedExternal(cany);
+        vector<int> indexes = laserProject::findCircleContoursIndexes(contour, numOfContour, contourSize, contourArea);
+        if (indexes.size() != 6)
+            continue;
+        for (int i = 0; i < indexes.size(); i++) {
+            laserProject::drawWithContourI(contour[indexes[i]], gray, " ");
+        }
+
+
+        //extract all points
+        vector<cv::Point> ps;
+        for (auto &con : contour) {
+            ps.insert(ps.end(), con.begin(), con.end());
+        }
+
+        //ransac
+        const int N = 1000;
+        const double min_dist = 10;
+        const float eps = 3;
+        const float min_coverage = 0.8;
+        for (int i = 0; i < N; i++) {
+            //select 3 points randomly
+            cv::Point p1, p2, p3;
+            p1 = ps[rand() % ps.size()];
+            while (true) {
+                p2 = ps[rand() % ps.size()];
+                p3 = ps[rand() % ps.size()];
+                auto v1 = p2 - p1;
+                auto v2 = p3 - p1;
+                if (cv::norm(p1 - p2) > min_dist &&
+                    cv::norm(p1 - p3) > min_dist &&
+                    cv::norm(p2 - p3) > min_dist) {
+                    break;
+                }
+            }
+            //compute circle 
+            auto cir = findCircle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+
+            //count how many points on this circle
+            int cnt = std::count_if(ps.begin(), ps.end(), [&](cv::Point const& p)->bool {
+                return std::abs(cv::norm(p - cir.center()) - cir.r) < eps;
+            });
+
+            float coverage = cnt / (2 * CV_PI*cir.r);
+            if (coverage> min_coverage && coverage < 1) {
+                //draw 
+                cv::circle(rImg, cir.center(), cir.r, { 0,255,0 }, 1);
+            }
+        }
+
+        cv::imshow("color", rImg);
+
+
+        /*for (int i = 0; i < contour.size(); i++) {
+            laserProject::drawWithContourI(contour[i], gray, " ");
+        }*/
         imshow("blur", gaussian);
         imshow("gray", gray);
         imshow("cannyWithGaussian", cany);
-        imshow("binary", binary);
-        //cv::Mat grayimg;
-        //cv::Mat laserOFFimg;
-        //cv::Mat laserONimg;
-        //laser.laserOFF();
-        //cap >> laserOFFimg;
-        //while (laserOFFimg.empty()) {
-        //    cap >> laserOFFimg;
-        //}
-        //laser.laserON();
-        //cap >> laserONimg;
-        //while (laserONimg.empty()) {
-        //    cap >> laserONimg;
-        //}
-
-
-        //cv::cvtColor(laserOFFimg, grayimg, cv::COLOR_BGR2GRAY);
-        //vector<vector<cv::Point>> contour = laserProject::getLaserContour(laserONimg, grayimg, 50);
-        //if (contour.size() != 0) {
-        //    cout << "contour Size : " << contour.size() << endl;
-        //    cout << contour[0].size() << endl;
-        //}
-        //else {
-        //    cout << "contour not found" << endl;
-        //}
 
         if (cv::waitKey(1) == 27) break;
 
@@ -324,7 +427,7 @@ int main(void)
             continue;
 
         std::vector<cv::Point2f> transformedPoints = laserProject::transform2Dpoints(laserContour[0], transformMat);
-        
+
         cv::cvtColor(transformedImg, transformedImgRGB, cv::COLOR_GRAY2RGB);
         cv::circle(transformedImgRGB, circleThroughCenters.center, circleThroughCenters.radius, cv::Scalar(250, 0, 0), 2);
 
@@ -332,7 +435,7 @@ int main(void)
         cv::Moments cen = cv::moments(transformedPoints);
         float cx = cen.m10 / cen.m00;
         float cy = cen.m01 / cen.m00;
-        
+
 
         distance = sqrt(pow(circPoint2f[currentPickedPoint].x - cx, 2) + pow((circPoint2f[currentPickedPoint].y - cy), 2));
         /*cout << "distance to the circle" << endl;
@@ -377,7 +480,7 @@ int main(void)
 
 
         stepsY = kp2 * distY + ki2 * int_errY;
-        
+
         moveCmd = 0;
         if (stepsY > 0) {
             moveCmd = 2;
