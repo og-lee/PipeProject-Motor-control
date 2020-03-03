@@ -90,29 +90,66 @@ int main() {
     Sleep(10);
     if (!cap.open(0))
         return 0;
+    cv::Mat img;
+    cv::Mat roiImg;
+    cap >> img;
+    cv::Rect2d r = cv::selectROI(img);
+    
+    //laser.laserON();
+
+    int min = 100;
+    int max = 200;
     for (;;) {
-        cv::Mat grayimg;
-        cv::Mat laserOFFimg;
-        cv::Mat laserONimg;
-        laser.laserOFF();
-        Sleep(300);
-        cap >> laserOFFimg;
-        laser.laserON();
-        Sleep(300);
-        cap >> laserONimg;
+        cv::Mat gray;
+        cv::Mat binary;
+        cv::Mat img; 
+        cv::Mat rImg;
+        cv::Mat gaussian;
+        cv::Mat median;
+        cv::Mat cany;
+        cv::Mat cany1;
+        cv::Mat equ;
+        cap >> img;
+        rImg = img(r);
+        cv::resize(rImg, rImg, cv::Size(0, 0), 3, 3);
+
+        cv::cvtColor(rImg, gray, cv::COLOR_RGB2GRAY);
+        cv::GaussianBlur(gray, gaussian, cv::Size(3,3),2);
+        int cannyMin = 70;
+        int cannyMax = 150;
+        cv::Canny(gaussian, cany,cannyMin,cannyMax);
+        cv::adaptiveThreshold(gaussian, binary, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY,5,5);
+
+        imshow("blur", gaussian);
+        imshow("gray", gray);
+        imshow("cannyWithGaussian", cany);
+        imshow("binary", binary);
+        //cv::Mat grayimg;
+        //cv::Mat laserOFFimg;
+        //cv::Mat laserONimg;
+        //laser.laserOFF();
+        //cap >> laserOFFimg;
+        //while (laserOFFimg.empty()) {
+        //    cap >> laserOFFimg;
+        //}
+        //laser.laserON();
+        //cap >> laserONimg;
+        //while (laserONimg.empty()) {
+        //    cap >> laserONimg;
+        //}
 
 
-       /* cv::cvtColor(laserOFFimg, grayimg, cv::COLOR_BGR2GRAY);
-        vector<vector<cv::Point>> contour = laserProject::getLaserContour(laserONimg, grayimg, 50);
-        if (contour.size() != 0) {
-            cout << "contour Size : " << contour.size() << endl;
-            cout << contour[0].size() << endl;
-        }
-        else {
-            cout << "contour not found" << endl;
-        }
+        //cv::cvtColor(laserOFFimg, grayimg, cv::COLOR_BGR2GRAY);
+        //vector<vector<cv::Point>> contour = laserProject::getLaserContour(laserONimg, grayimg, 50);
+        //if (contour.size() != 0) {
+        //    cout << "contour Size : " << contour.size() << endl;
+        //    cout << contour[0].size() << endl;
+        //}
+        //else {
+        //    cout << "contour not found" << endl;
+        //}
 
-        if (cv::waitKey(1) == 27) break;*/
+        if (cv::waitKey(1) == 27) break;
 
     }
 
