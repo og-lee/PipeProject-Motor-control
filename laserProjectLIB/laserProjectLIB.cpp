@@ -48,12 +48,12 @@ namespace laserProject {
             if (index.size() != numOfContour)
                 throw 0;
             else
-                cout << "number of holes found " << index.size() << endl;;
+                cout << "number of holes found " << index.size()<<endl;
         }
         catch (int x)
         {
-            cout << "number of holes are not accurate" << endl;
-            cout << "number of holes found " << index.size() << endl;
+            //cout << "number of holes are not accurate" << endl;
+            //cout << "number of holes found " << index.size() << endl;
         }
         catch (...) {
             cout << "default exception" << endl;
@@ -152,8 +152,10 @@ namespace laserProject {
         //cv::imshow(str, img);
     }
     void drawWithContourI(const std::vector<cv::Point>& pt, const cv::Mat& img, const char* str) {
+        cv::RNG rng(12345);
+        cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
         for (int i = 0; i < pt.size(); i++) {
-            cv::circle(img, pt[i], 1, cv::Scalar(0, 100, 250), 1);
+            cv::circle(img, pt[i], 1, color, 1);
         }
         //cv::imshow(str, img);
     }

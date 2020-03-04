@@ -75,4 +75,6 @@ namespace laserProject {
     void checkLaser(const cv::Mat& img, int minThreshold);
     std::vector<std::vector<cv::Point>> getContoursSortedExternal(const cv::Mat& thresholdImg);
 
+
+
 }

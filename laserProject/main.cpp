@@ -18,7 +18,6 @@ static std::atomic<int> stepsY = 0;
 static int absStepsX = 0;
 static int absStepsY = 0;
 
-
 // new things to update 
 // test with not subtracting images // just the laser on , can I detect laser ?? 
 // 
@@ -89,58 +88,33 @@ struct Circle {
 // which the given three points lie 
 Circle findCircle(int x1, int y1, int x2, int y2, int x3, int y3)
 {
-    float x12 = x1 - x2;
-    float x13 = x1 - x3;
-
-    float y12 = y1 - y2;
-    float y13 = y1 - y3;
-
-    float y31 = y3 - y1;
-    float y21 = y2 - y1;
-
-    float x31 = x3 - x1;
-    float x21 = x2 - x1;
-
-    // x1^2 - x3^2 
-    float sx13 = pow(x1, 2) - pow(x3, 2);
-
-    // y1^2 - y3^2 
-    float sy13 = pow(y1, 2) - pow(y3, 2);
-
-    float sx21 = pow(x2, 2) - pow(x1, 2);
-    float sy21 = pow(y2, 2) - pow(y1, 2);
-
-    float f = ((sx13) * (x12)
-        +(sy13) * (x12)
-        +(sx21) * (x13)
-        +(sy21) * (x13))
-        / (2 * ((y31) * (x12)-(y21) * (x13)));
-    float g = ((sx13) * (y12)
-        +(sy13) * (y12)
-        +(sx21) * (y13)
-        +(sy21) * (y13))
-        / (2 * ((x31) * (y12)-(x21) * (y13)));
-
-    float c = -pow(x1, 2) - pow(y1, 2) - 2 * g * x1 - 2 * f * y1;
-
-    // eqn of circle be x^2 + y^2 + 2*g*x + 2*f*y + c = 0 
-    // where centre is (h = -g, k = -f) and radius r 
-    // as r^2 = h^2 + k^2 - c 
-    float h = -g;
-    float k = -f;
-    float sqr_of_r = h * h + k * k - c;
-
-    // r is the radius 
-    float r = sqrt(sqr_of_r);
-
-    //cout << "Centre = (" << h << ", " << k << ")" << endl;
-    //cout << "Radius = " << r;
-    return { h,k,r };
+    float r;
+    cv::Point2f pt;
+    std::vector<cv::Point> arr(3);
+    arr[0] = cv::Point(x1, y1);
+    arr[1] = cv::Point(x2, y2);
+    arr[2] = cv::Point(x3, y3);
+    cv::minEnclosingCircle(arr, pt, r);
+        return { pt.x,pt.y,r};
 }
 
-
+void CallBackFunc(int event, int x, int y, int flags, void* userdata)
+{
+    std::vector<cv::Point> *pt = (vector<cv::Point>*)userdata;
+    if (event == cv::EVENT_LBUTTONDOWN)
+    {
+        pt->push_back(cv::Point(x, y));
+        cout <<  "(" << x << ", " << y << ") saved" << endl;
+    }
+    else if (event == cv::EVENT_RBUTTONDOWN)
+    {
+        pt->clear();
+        cout << "all the points cleared" << endl;
+    }
+ }
 
 int main() {
+    std::vector<cv::Point> userPicked;
 
     cv::VideoCapture cap;
     LaserRangeFinder laser;
@@ -152,8 +126,20 @@ int main() {
     cv::Mat roiImg;
     cap >> img;
     cv::Rect2d r = cv::selectROI(img);
-
     //laser.laserON();
+    int cannyMin = 50;
+    int cannyMax = 100;
+    cv::Mat edge;
+    cv::Canny(img, edge, cannyMin, cannyMax);
+
+
+    edge = edge(r);
+    cv::resize(edge, edge, cv::Size(0, 0), 2, 2);
+    cv::namedWindow("my edges");
+    cv::setMouseCallback("my edges",CallBackFunc,&userPicked);
+    cv::imshow("my edges", edge);
+
+    
 
     for (;;) {
         cv::Mat imgNoLaser;
@@ -163,94 +149,110 @@ int main() {
         cv::Mat rImg;
         cv::Mat gaussian;
         cv::Mat cany;
+        cv::Mat binary;
 
         //laser.laserON();
         //Sleep(200);
         //cap >> imgWithLaser;
-        //cap >> imgWithLaser;
         //laser.laserOFF();
         //Sleep(200);
-        //cap >> imgNoLaser;
+
         cap >> imgNoLaser;
         rImg = imgNoLaser(r);
 
 
-        //imshow("no laser", imgNoLaser);
-        //imshow("with laser", imgWithLaser);
-        //cv::waitKey(1);
 
-        cv::resize(rImg, rImg, cv::Size(0, 0), 3, 3);
+        cv::resize(rImg, rImg, cv::Size(0, 0),2,2);
 
         cv::cvtColor(rImg, gray, cv::COLOR_RGB2GRAY);
 
-        cv::GaussianBlur(gray, gaussian, cv::Size(3, 3), 1);
-        int cannyMin = 80;
-        int cannyMax = 150;
-        int numOfContour = 6;
+               int numOfContour = 6;
         int contourSize = 20;
         int contourArea = 100;
 
-        cv::Canny(gaussian, cany, cannyMin, cannyMax);
-        //cv::adaptiveThreshold(gaussian, binary, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY,5,5);
-        vector<vector<cv::Point>> contour = laserProject::getContoursSortedExternal(cany);
+        cv::Canny(gray, cany, cannyMin, cannyMax);
+        imshow("canny", cany);
+        cv::waitKey(1);
+
+        cv::GaussianBlur(gray, gaussian,cv::Size(9,9),0,0);
+        cv::adaptiveThreshold(gaussian, binary, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV,9,2);
+         vector<vector<cv::Point>> contour = laserProject::getContoursSortedExternal(cany);
         vector<int> indexes = laserProject::findCircleContoursIndexes(contour, numOfContour, contourSize, contourArea);
-        if (indexes.size() != 6)
-            continue;
-        for (int i = 0; i < indexes.size(); i++) {
-            laserProject::drawWithContourI(contour[indexes[i]], gray, " ");
+
+        //for (int i = 0; i < indexes.size(); i++) {
+        //    laserProject::drawWithContourI(contour[indexes[i]], rImg, " ");
+        //}
+
+        int count = 0;
+        for (int i = 0; i < contour.size(); i++) {
+            if (contour[i].size() > 50) {
+                count++;
+                laserProject::drawWithContourI(contour[i], rImg, " ");
+            }
         }
+        cv::Mat binResult;
+        cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
+        //cv::erode(binary, binResult, element);
+        //cout<<"number of contour" << contour.size() << endl;
+        //cout << "contour size over 30 : " << count <<endl;
 
 
         //extract all points
         vector<cv::Point> ps;
+        const int minConSize = 50;
         for (auto &con : contour) {
+            if (con.size() < minConSize)
+                continue;
             ps.insert(ps.end(), con.begin(), con.end());
         }
 
         //ransac
-        const int N = 1000;
-        const double min_dist = 10;
-        const float eps = 3;
-        const float min_coverage = 0.8;
-        for (int i = 0; i < N; i++) {
-            //select 3 points randomly
-            cv::Point p1, p2, p3;
-            p1 = ps[rand() % ps.size()];
-            while (true) {
-                p2 = ps[rand() % ps.size()];
-                p3 = ps[rand() % ps.size()];
-                auto v1 = p2 - p1;
-                auto v2 = p3 - p1;
-                if (cv::norm(p1 - p2) > min_dist &&
-                    cv::norm(p1 - p3) > min_dist &&
-                    cv::norm(p2 - p3) > min_dist) {
-                    break;
-                }
-            }
-            //compute circle 
-            auto cir = findCircle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+        //const int N = 10000;
+        //const double min_dist = 5;
+        //const float eps = 3;
+        //const float min_coverage = 0.9;
+        //for (int i = 0; i < N; i++) {
+        //    //select 3 points randomly
+        //    cv::Point p1, p2, p3;
+        //    p1 = ps[rand() % ps.size()];
+        //    p2 = ps[rand() % ps.size()];
+        //    p3 = ps[rand() % ps.size()];
+        //    while (true) {
+        //        break;
+        //        p2 = ps[rand() % ps.size()];
+        //        p3 = ps[rand() % ps.size()];
+        //        auto v1 = p2 - p1;
+        //        auto v2 = p3 - p1;
+        //        if (cv::norm(p1 - p2) > min_dist &&
+        //            cv::norm(p1 - p3) > min_dist &&
+        //            cv::norm(p2 - p3) > min_dist) {
+        //            break;
+        //        }
+        //    }
+        //    //compute circle 
+        //    auto cir = findCircle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
 
-            //count how many points on this circle
-            int cnt = std::count_if(ps.begin(), ps.end(), [&](cv::Point const& p)->bool {
-                return std::abs(cv::norm(p - cir.center()) - cir.r) < eps;
-            });
+        //    //count how many points on this circle
+        //    int cnt = std::count_if(ps.begin(), ps.end(), [&](cv::Point const& p)->bool {
+        //        return std::abs(cv::norm(p - cir.center()) - cir.r) < eps;
+        //    });
 
-            float coverage = cnt / (2 * CV_PI*cir.r);
-            if (coverage> min_coverage && coverage < 1) {
-                //draw 
-                cv::circle(rImg, cir.center(), cir.r, { 0,255,0 }, 1);
-            }
-        }
+        //    float coverage = cnt / (2 * CV_PI*cir.r);
+        //    if (coverage > min_coverage && coverage < 1) {
+        //        //draw 
+        //        cv::circle(rImg, cir.center(), cir.r, { 0,255,0 }, 1);
+        //        std::cout <<"coverage : "<<coverage << endl;
+        //        std::cout << "total Points : " << ps.size() << endl;
+        //        std::cout << "count : " << cnt << endl;
+
+        //    }
+        //}
 
         cv::imshow("color", rImg);
+        cv::waitKey(1);
+        cv::imshow("bin", binary);
+        //cv::imshow("eroded IMG", binResult);
 
-
-        /*for (int i = 0; i < contour.size(); i++) {
-            laserProject::drawWithContourI(contour[i], gray, " ");
-        }*/
-        imshow("blur", gaussian);
-        imshow("gray", gray);
-        imshow("cannyWithGaussian", cany);
 
         if (cv::waitKey(1) == 27) break;
 
@@ -509,6 +511,6 @@ int main(void)
 
     _serial.ClosePort();
 
-}
+    }
 
 #endif
