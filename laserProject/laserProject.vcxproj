@@ -95,7 +95,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>C:\OpenCV\opencv\myBuild\install\x64\vc15\lib;C:\Users\oggyu\source\repos\laserProject\x64\Debug\laserProjectLIB.lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core400.lib;opencv_core400d.lib;opencv_imgproc400.lib;opencv_imgproc400d.lib;opencv_videoio400.lib;opencv_videoio400d.lib;opencv_highgui400d.lib;opencv_highgui400.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core400.lib;opencv_core400d.lib;opencv_imgproc400.lib;opencv_imgproc400d.lib;opencv_videoio400.lib;opencv_videoio400d.lib;opencv_highgui400d.lib;opencv_highgui400.lib;opencv_imgcodecs400d.lib;opencv_imgcodecs400.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -111,7 +111,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>C:\OpenCV\opencv\myBuild\install\x64\vc15\lib;C:\Users\oggyu\source\repos\laserProject\x64\Debug\laserProjectLIB.lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core400.lib;opencv_core400d.lib;opencv_imgproc400.lib;opencv_imgproc400d.lib;opencv_videoio400.lib;opencv_videoio400d.lib;opencv_highgui400d.lib;opencv_highgui400.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core400.lib;opencv_core400d.lib;opencv_imgproc400.lib;opencv_imgproc400d.lib;opencv_videoio400.lib;opencv_videoio400d.lib;opencv_highgui400d.lib;opencv_highgui400.lib;opencv_imgcodecs400d.lib;opencv_imgcodecs400.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -131,7 +131,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>C:\OpenCV\opencv\myBuild\install\x64\vc15\lib;C:\Users\oggyu\source\repos\laserProject\x64\Debug\laserProjectLIB.lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core400.lib;opencv_core400d.lib;opencv_imgproc400.lib;opencv_imgproc400d.lib;opencv_videoio400.lib;opencv_videoio400d.lib;opencv_highgui400d.lib;opencv_highgui400.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core400.lib;opencv_core400d.lib;opencv_imgproc400.lib;opencv_imgproc400d.lib;opencv_videoio400.lib;opencv_videoio400d.lib;opencv_highgui400d.lib;opencv_highgui400.lib;opencv_imgcodecs400d.lib;opencv_imgcodecs400.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -151,7 +151,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>C:\OpenCV\opencv\myBuild\install\x64\vc15\lib;C:\Users\oggyu\source\repos\laserProject\x64\Debug\laserProjectLIB.lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core400.lib;opencv_core400d.lib;opencv_imgproc400.lib;opencv_imgproc400d.lib;opencv_videoio400.lib;opencv_videoio400d.lib;opencv_highgui400d.lib;opencv_highgui400.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core400.lib;opencv_core400d.lib;opencv_imgproc400.lib;opencv_imgproc400d.lib;opencv_videoio400.lib;opencv_videoio400d.lib;opencv_highgui400d.lib;opencv_highgui400.lib;opencv_imgcodecs400d.lib;opencv_imgcodecs400.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
