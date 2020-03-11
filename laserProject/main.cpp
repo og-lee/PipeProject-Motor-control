@@ -18,7 +18,7 @@ static int stepsX = 0;
 static std::atomic<int> stepsY = 0;
 static int absStepsX = 0;
 static int absStepsY = 0;
-
+static bool finished = false;
 // new things to update 
 // test with not subtracting images // just the laser on , can I detect laser ?? 
 // 
@@ -105,7 +105,7 @@ void CallBackFunc(int event, int x, int y, int flags, void* userdata)
     if (event == cv::EVENT_LBUTTONDOWN)
     {
         pt->push_back(cv::Point(x, y));
-        cout << "(" << x << ", " << y << ") saved" << endl;
+        cout <<pt->size()<<"point"<<"(" << x << ", " << y << ") saved" << endl;
     }
     else if (event == cv::EVENT_RBUTTONDOWN)
     {
@@ -125,7 +125,7 @@ int main() {
           return 0;*/
     cv::Mat img;
     cv::Mat roiImg;
-    img = cv::imread("1.jpg", 1);
+    img = cv::imread("C:/Users/oggyu/Pictures/Camera Roll/2.jpg", 1);
     cv::Rect2d r = cv::selectROI(img);
     //laser.laserON();
     int cannyMin = 75;
@@ -135,42 +135,64 @@ int main() {
 
     edge = edge(r);
     roiImg = img(r);
-    cv::resize(edge, edge, cv::Size(0, 0), 2, 2);
-    cv::resize(roiImg, roiImg, cv::Size(0, 0), 2, 2);
+    cv::resize(edge, edge, cv::Size(0, 0), 3, 3);
+    cv::resize(roiImg, roiImg, cv::Size(0, 0), 3, 3);
     cv::namedWindow("my edges");
     cv::setMouseCallback("my edges", CallBackFunc, &userPicked);
-
+    
     vector<vector<cv::Point>> contour = laserProject::getContoursSorted(edge);
 
-    for (int i = 0; i < contour.size(); i++) {
-        if (contour[i].size() < 50)
-            continue;
+    //for (int i = 0; i < contour.size(); i++) {
+    //    if (contour[i].size() < 50)
+    //        continue;
+    //    cv::RotatedRect rect = cv::fitEllipse(contour[i]);
+    //    //cv::ellipse(roiImg, rect, cv::Scalar(0, 250, 0));
+    //    laserProject::drawWithContourI(contour[i], roiImg, " ");
+    //}
+    for (int i = contour.size()-1; i > contour.size() - 2; i--) {
         cv::RotatedRect rect = cv::fitEllipse(contour[i]);
-        cv::ellipse(roiImg, rect, cv::Scalar(0, 250, 0));
+        cv::ellipse(roiImg, rect, cv::Scalar(0, 250, 0),2);
+        laserProject::drawWithContourI(contour[i], roiImg, " ");
+
+    }
+    cv::imshow("roi Img", roiImg);
+    cv::imshow("my edges",edge);
+    cv::waitKey(1);
+
+    //select contour for image 
+    while (userPicked.size() < 5) {
+        cv::waitKey(10);
+        if (userPicked.size() >= 5) {
+            std::cout << "more than 5 picked " << endl;
+            break;
+        }
     }
 
+    cv::RotatedRect myellipse = cv::fitEllipse(userPicked);
+    cv::ellipse(roiImg, myellipse, cv::Scalar(0, 250, 0),2);
+   
+    cv::imshow("roi Img", roiImg);
 
-
-    vector<cv::Point> ps;
-    const int minConSize = 50;
-    for (auto &con : contour) {
-        if (con.size() < minConSize)
-            continue;
-        ps.insert(ps.end(), con.begin(), con.end());
-    }
-    const int N = 10000;
-    const double min_dist = 5;
-    const float eps = 3;
-    const float min_coverage = 0.9;
-    for (int i = 0; i < N; i++) {
-        //select 3 points randomly
-        cv::Point p1, p2, p3,p4,p5;
-        std::vector<cv::Point> ellipPt;
-        ellipPt[0] = ps[rand() % ps.size()];
-        ellipPt[1] = ps[rand() % ps.size()];
-        ellipPt[2] = ps[rand() % ps.size()];
-        ellipPt[3] = ps[rand() % ps.size()];
-        ellipPt[4] = ps[rand() % ps.size()];
+    //vector<cv::Point> ps;
+    //const int minConSize = 50;
+    //for (auto &con : contour) {
+    //    if (con.size() < minConSize)
+    //        continue;
+    //    ps.insert(ps.end(), con.begin(), con.end());
+    //}
+    //const int N = 10000;
+    //const double min_dist = 5;
+    //const float eps = 3;
+    //const float min_coverage = 0.9;
+    //for (int i = 0; i < N; i++) {
+    //    //select 3 points randomly
+    //    cv::Point p1, p2, p3,p4,p5;
+    //    std::vector<cv::Point> ellipPt(5);
+    //    ellipPt[0] = ps[rand() % ps.size()];
+    //    ellipPt[1] = ps[rand() % ps.size()];
+    //    ellipPt[2] = ps[rand() % ps.size()];
+    //    ellipPt[3] = ps[rand() % ps.size()];
+    //    ellipPt[4] = ps[rand() % ps.size()];
 
         //while (true) {
         //    break;
@@ -186,16 +208,17 @@ int main() {
         //}
         //compute circle 
 
-        //auto cir = findCircle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-        cv::RotatedRect myEllipse = cv::fitEllipse(ellipPt);
+        ////auto cir = findCircle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+        //cv::RotatedRect myEllipse = cv::fitEllipse(ellipPt);
 
-        //count how many points on this circle
-        int cnt = std::count_if(ps.begin(), ps.end(), [&](cv::Point const& p)->bool {
-            float X = pow((p.x - myEllipse.center.x)*cos(myEllipse.angle) + (p.y - myEllipse.center.y)*sin(myEllipse.angle),2)/pow((myEllipse.size.width),2);
-            float Y = pow((p.y - myEllipse.center.y)*cos(myEllipse.angle) - (p.x - myEllipse.center.x)*sin(myEllipse.angle),2)/pow((myEllipse.size.height),2);
-            return std::abs(X+Y-1) < eps;
-        });
-        cv::ellipse(roiImg, myEllipse, cv::Scalar(0, 255, 0));
+        ////count how many points on this circle
+        //int cnt = std::count_if(ps.begin(), ps.end(), [&](cv::Point const& p)->bool {
+        //    float X = pow((p.x - myEllipse.center.x)*cos(myEllipse.angle) + (p.y - myEllipse.center.y)*sin(myEllipse.angle),2)/pow((myEllipse.size.width),2);
+        //    float Y = pow((p.y - myEllipse.center.y)*cos(myEllipse.angle) - (p.x - myEllipse.center.x)*sin(myEllipse.angle),2)/pow((myEllipse.size.height),2);
+        //    return std::abs(X+Y-1) < eps;
+        //});
+        //if(cnt > 100)
+        //cv::ellipse(roiImg, myEllipse, cv::Scalar(0, 255, 0));
 
        // float coverage = cnt / (2 * CV_PI*cir.r);
         /*if (coverage > min_coverage && coverage < 1) {
@@ -206,7 +229,7 @@ int main() {
             std::cout << "count : " << cnt << endl;
 
         }*/
-    }
+    //}
 
 
     cv::imshow("my edges", edge);
