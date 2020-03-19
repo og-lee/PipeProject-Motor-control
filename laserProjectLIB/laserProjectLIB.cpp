@@ -155,7 +155,7 @@ namespace laserProject {
         cv::RNG rng(12345);
         cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
         for (int i = 0; i < pt.size(); i++) {
-            cv::circle(img, pt[i], 1, color, 1);
+            cv::circle(img, pt[i], 1, color);
         }
         //cv::imshow(str, img);
     }
@@ -282,4 +282,9 @@ namespace laserProject {
         cv::threshold(result, result, minThreshold, 255, cv::THRESH_BINARY);
         cv::imshow("find the brightest part", result);
     }
+    double distancePt(cv::Point pt1, cv::Point pt2) {
+        cv::Point temp = pt1 - pt2;
+        return sqrt(temp.x*temp.x + temp.y*temp.y);
+    }
+
 }

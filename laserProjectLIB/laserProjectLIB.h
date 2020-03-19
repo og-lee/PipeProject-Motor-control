@@ -7,6 +7,8 @@
 #include <cmath>
 #include <memory.h>
 #include <algorithm>
+
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -75,6 +77,6 @@ namespace laserProject {
     void checkLaser(const cv::Mat& img, int minThreshold);
     std::vector<std::vector<cv::Point>> getContoursSortedExternal(const cv::Mat& thresholdImg);
 
-
+    double distancePt(cv::Point pt1, cv::Point pt2);
 
 }

@@ -27,7 +27,7 @@
     <ClCompile Include="INAmessage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ransac_ellipse2d.cpp">
+    <ClCompile Include="lsdlines.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,10 +41,10 @@
     <ClInclude Include="INAmessage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ransac_ellipse2d.h">
+    <ClInclude Include="lsdlines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ransac2d.h">
+    <ClInclude Include="Circle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
