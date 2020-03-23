@@ -287,4 +287,96 @@ namespace laserProject {
         return sqrt(temp.x*temp.x + temp.y*temp.y);
     }
 
+    Circles find_circlesWithRansac(Point2fs& pnts, Mat img ,
+        const float min_distance ,
+        const int min_rad ,
+        const int max_rad ,
+        const float epsilon_rad ,
+        const float match_threshold ,
+        const float min_fitness ,
+        const int sample_count ) {
+        Circles circles;     //vector<Circle> Circles 
+        std::mt19937 rng(std::time(0));
+        std::uniform_int_distribution<unsigned long> distr(0, pnts.size());
+        for (int i = 0; i < sample_count; i++)
+        {
+            //random 3 points
+         /*   Point2f p0 = pnts[rand() % pnts.size()];
+            Point2f p1 = pnts[rand() % pnts.size()];
+            Point2f p2 = pnts[rand() % pnts.size()];*/
+            Point2f p0 = pnts[distr(rng)];
+            Point2f p1 = pnts[distr(rng)];
+            Point2f p2 = pnts[distr(rng)];
+            while (norm(p1 - p0) < min_distance)p1 = pnts[distr(rng)];
+            while (norm(p1 - p2) < min_distance || norm(p2 - p0) < min_distance)p2 = pnts[distr(rng)];
+            if (!img.empty()) {
+                circle(img, p0, 3, { 0,255,255 });
+                circle(img, p1, 3, { 0,255,255 });
+                circle(img, p2, 3, { 0,255,255 });
+                _show(img);
+                _wait();
+            }
+
+            Vec2f m1 = (p0 + p1) / 2.0;
+            Vec2f m2 = (p1 + p2) / 2.0;
+            Vec2f n1 = p1 - p0;
+            Vec2f n2 = p2 - p1;
+            Matx22f A(n1(0), n1(1), n2(0), n2(1));
+            Matx21f b(m1.dot(n1), m2.dot(n2));
+            if (determinant(A) != 0)
+            {
+                Matx21f X = A.inv()*b;
+                Point2f center{ X(0), X(1) };
+                float R = norm(center - p0);
+                //check validity
+                if (R < min_rad || R> max_rad)continue;
+
+                float perimeter = CV_2PI * R;
+                //scan for match
+                int cnt = 0;
+                Circle tempCir;
+                std::vector<cv::Point2f> inlierPts;
+                for (auto&p : pnts) {
+                    if (abs(norm(center - p) - R) < epsilon_rad) {
+                        cnt++;
+                        inlierPts.push_back(p);
+                        //check inliers 
+                    }
+                }
+
+                float fitness = cnt / perimeter;
+                //cout << "Fitness=" << fitness << endl;
+
+
+
+                if (fitness > min_fitness) // this is a candidate circle
+                {
+                    if (!img.empty()) {
+                        circle(img, center, R, { 0,255,0 });
+                        _show(img);
+                        _wait();
+                    }
+                    bool exist = false;
+                    for (int k = 0; k < circles.size(); k++) {
+                        Circle& cir = circles[k];
+                        float match_value = norm(center - cir.C) + abs(R - cir.R);
+                        if (match_value < match_threshold) {
+                            exist = true;
+                            if (fitness > cir.fitness) //replace
+                            {
+                                cir = { center,R,fitness, cir.match_cnt,inlierPts };
+                            }
+                            cir.match_cnt++;
+                            break;
+                        }
+                    }
+                    if (!exist) {
+                        circles.push_back({ center,R,fitness ,0,inlierPts });
+                        //cout << "Detected circle: " << center << ", R=" << R << endl;
+                    }
+                }
+            }
+        }
+        return circles;
+    }
 }

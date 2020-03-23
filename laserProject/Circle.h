@@ -1,7 +1,12 @@
 #pragma once
+#include <random>
+#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <vector>
 using namespace cv;
-
-typedef vector<Point2f> Point2fs;
+using namespace std; 
 
 
 typedef struct {
@@ -11,3 +16,12 @@ typedef struct {
     int match_cnt;
     std::vector<cv::Point2f> inliers;
 } Circle;
+
+typedef vector<Circle> Circles;
+typedef std::vector<Point2f> Point2fs;
+
+
+bool compareByInlierCircle(const Circle &a, const Circle &b);
+bool compareByFitnessCircle(const Circle &a, const Circle &b);
+void _show(Mat img);
+void _wait();

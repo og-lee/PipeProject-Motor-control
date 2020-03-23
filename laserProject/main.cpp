@@ -19,6 +19,7 @@
 #include <opencv2/line_descriptor/descriptor.hpp>
 #include <random>
 #include "Circle.h"
+#include "myEdge.h"
 using namespace cv;
 using namespace line_descriptor;
 
@@ -122,113 +123,29 @@ void CallBackFunc(int event, int x, int y, int flags, void* userdata)
     }
 }
 
+struct model_cnt {
+    RotatedRect ellipse;
+    int count;
+};
 
-typedef vector<Circle> Circles;
-
-bool compareByInlierCircle(const Circle &a, const Circle &b) {
-    return a.inliers.size() > b.inliers.size();
+std::vector<model_cnt> models;
+bool compareByLength(const model_cnt &a, const model_cnt &b) {
+    return a.count > b.count;
 }
-bool compareByFitnessCircle(const Circle &a, const Circle &b) {
-    return a.fitness > b.fitness;
-}
-
-void _show(Mat img) {
-    cv::imshow("show Img", img);
-}
-void _wait() {
-    cv::waitKey(1);
-}
-Circles find_circles(Point2fs& pnts, Mat img = cv::Mat(),
-    const float min_distance = 40,
-    const int min_rad = 100,
-    const int max_rad = 200,
-    const float epsilon_rad = 1.5,
-    const float match_threshold = 15,
-    const float min_fitness = 0.5,
-    const int sample_count = 1000) {
-    Circles circles;     //vector<Circle> Circles 
-    std::mt19937 rng(std::time(0));
-    std::uniform_int_distribution<unsigned long> distr(0, pnts.size());
-    for (int i = 0; i < sample_count; i++)
-    {
-        //random 3 points
-     /*   Point2f p0 = pnts[rand() % pnts.size()];
-        Point2f p1 = pnts[rand() % pnts.size()];
-        Point2f p2 = pnts[rand() % pnts.size()];*/
-        Point2f p0 = pnts[distr(rng)];
-        Point2f p1 = pnts[distr(rng)];
-        Point2f p2 = pnts[distr(rng)];
-        while (norm(p1 - p0) < min_distance)p1 = pnts[distr(rng)];
-        while (norm(p1 - p2) < min_distance || norm(p2 - p0) < min_distance)p2 = pnts[distr(rng)];
-        if (!img.empty()) {
-            circle(img, p0, 3, { 0,255,255 });
-            circle(img, p1, 3, { 0,255,255 });
-            circle(img, p2, 3, { 0,255,255 });
-            _show(img);
-            _wait();
-        }
-
-        Vec2f m1 = (p0 + p1) / 2.0;
-        Vec2f m2 = (p1 + p2) / 2.0;
-        Vec2f n1 = p1 - p0;
-        Vec2f n2 = p2 - p1;
-        Matx22f A(n1(0), n1(1), n2(0), n2(1));
-        Matx21f b(m1.dot(n1), m2.dot(n2));
-        if (determinant(A) != 0)
-        {
-            Matx21f X = A.inv()*b;
-            Point2f center{ X(0), X(1) };
-            float R = norm(center - p0);
-            //check validity
-            if (R < min_rad || R> max_rad)continue;
-
-            float perimeter = CV_2PI * R;
-            //scan for match
-            int cnt = 0;
-            Circle tempCir;
-            std::vector<cv::Point2f> inlierPts;
-            for (auto&p : pnts) {
-                if (abs(norm(center - p) - R) < epsilon_rad) {
-                    cnt++;
-                    inlierPts.push_back(p);
-                    //check inliers 
-                }
-            }
-
-            float fitness = cnt / perimeter;
-            //cout << "Fitness=" << fitness << endl;
 
 
+cv::Mat myimg = cv::imread("C:/Users/oggyu/Pictures/Camera Roll/1.jpg", 1);
+int myMin ;
+int myMax;
+int kernelSize=1;
 
-            if (fitness > min_fitness) // this is a candidate circle
-            {
-                if (!img.empty()) {
-                    circle(img, center, R, { 0,255,0 });
-                    _show(img);
-                    _wait();
-                }
-                bool exist = false;
-                for (int k = 0; k < circles.size(); k++) {
-                    Circle& cir = circles[k];
-                    float match_value = norm(center - cir.C) + abs(R - cir.R);
-                    if (match_value < match_threshold) {
-                        exist = true;
-                        if (fitness > cir.fitness) //replace
-                        {
-                            cir = { center,R,fitness, cir.match_cnt,inlierPts};
-                        }
-                        cir.match_cnt++;
-                        break;
-                    }
-                }
-                if (!exist) {
-                    circles.push_back({ center,R,fitness ,0,inlierPts});
-                    //cout << "Detected circle: " << center << ", R=" << R << endl;
-                }
-            }
-        }
-    }
-    return circles;
+static void CannyThresh(int, void* userdata) {
+    int ker = kernelSize + 2;
+    cv::Mat dst;
+    cv::Mat blurImg;
+    cv::GaussianBlur(myimg, blurImg, cv::Size(ker, ker), 2, 0);
+    cv::Canny(blurImg, dst, myMin, myMax);
+    cv::imshow("canny ed", dst);
 }
 
 
@@ -246,25 +163,30 @@ int main() {
     img = cv::imread("C:/Users/oggyu/Pictures/Camera Roll/1.jpg", 1);
     cv::Rect2d r = cv::selectROI(img);
     //laser.laserON();
-    int cannyMin = 100;
-    int cannyMax = 150;
+    int cannyMin = 40;
+    int cannyMax = 100;
+    int gaussianFilterSize = 9;
+    cv::Size gauFil =  cv::Size(gaussianFilterSize, gaussianFilterSize);
     cv::Mat edge;
-    cv::Mat threshImg;
+    cv::GaussianBlur(img, img,gauFil,2,0);
     cv::Canny(img, edge, cannyMin, cannyMax);
-
+    cout << "type is :" << edge.type() << endl;
     edge = edge(r);
+
     roiImg = img(r);
     cv::cvtColor(roiImg,roiImgG,cv::COLOR_RGB2GRAY);
     //cv::GaussianBlur(roiImgG, threshImg,Size(3,3),1);
     //cv::medianBlur(roiImgG, threshImg, 5);
     //cv::adaptiveThreshold(roiImgG, threshImg, 255, ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY_INV,3,5);
 
-    int scale = 2;
+    int scale =2;
     cv::resize(edge, edge, cv::Size(0, 0), scale, scale);
     cv::resize(roiImg, roiImg, cv::Size(0, 0), scale, scale);
     cv::resize(roiImgG, roiImgG, cv::Size(0, 0), scale, scale);
     //cv::resize(threshImg, threshImg, cv::Size(0, 0), scale, 2);
 
+    
+    //edge.convertTo(edge, CV_8U);
     cv::namedWindow("my edges");
     cv::setMouseCallback("my edges", CallBackFunc, &userPicked);
     cv::imshow("my edges",edge);
@@ -272,6 +194,14 @@ int main() {
 
     cv::waitKey(1);
     
+
+    namedWindow("canny ed", cv::WINDOW_AUTOSIZE);
+    createTrackbar("Min Thresh", "canny ed", &myMin, 255, CannyThresh);
+    createTrackbar("Max Thresh", "canny ed", &myMax, 255, CannyThresh);
+    createTrackbar("kernel Size", "canny ed",&kernelSize,15,CannyThresh);
+    CannyThresh(0,0);
+
+    cv::waitKey(0);
     //vector<vector<cv::Point>> contour = laserProject::getContoursSortedExternal(edge);
 
     //for (int i = 0; i < contour.size(); i++) {
@@ -291,34 +221,32 @@ int main() {
 //
     //// make matrix to array 
     //
-    //Mat showColor;
-    //cvtColor(roiImgG, showColor, COLOR_GRAY2RGB);
-    //Ptr<LSDDetector> bd = LSDDetector::createLSDDetector();
-    //std::vector<KeyLine> lines;
-    //std::vector<Vec4f> lines1;
-    //cv::Mat mask = cv::Mat::ones(roiImgG.size(),CV_8UC1);
-    ////bd->detect(roiImgG, lines,1,1,mask);
-    //bd->detect(roiImgG, lines,1,1,mask);
-    //  
-//
-    //std::vector<vector<cv::Point>> points(lines.size());
-    //for (size_t i = 0; i < lines.size(); i++)
-    //{
-    //    KeyLine kl = lines[i];
-    //    if (kl.octave == 0 )
-    //    {
-    //        Point pt1 = Point2f(kl.startPointX, kl.startPointY);
-    //        Point pt2 = Point2f(kl.endPointX, kl.endPointY);
-//
-    //        cv::LineIterator it(roiImgG, pt1, pt2, 8);
-    //        points[i].resize(it.count);
-    //        for (int j = 0; j < it.count; j++, it++) {
-    //            points[i][j] = it.pos();
-    //        }
-    //        line(showColor, pt1, pt2, Scalar(rand()%255,rand()%255,rand()%255), 2);
-    //    }
-//
-    //}
+
+
+    cv::Mat showJunc;
+    cv::cvtColor(edge, showJunc, cv::COLOR_GRAY2RGB);
+    std::vector<cv::Point> junctions;
+    std::vector<cv::Point> endPoints;
+
+    /*while (true) {
+        auto t = clock();
+
+        junctions = findJunction(edge);
+
+        auto dt = clock() - t;
+
+        std::cout << "Run time: " << (1000.0*dt / CLOCKS_PER_SEC) << "ms" << std::endl;
+    }*/
+
+
+    junctions = findJunction(edge);
+
+    for (int i = 0; i < junctions.size(); i++) {
+        circle(showJunc, junctions[i], 1, cv::Scalar(0, 255, 0));
+    }
+    cv::imshow("junction",showJunc);
+    cv::waitKey(1);
+
     //  
     //cv::SimpleBlobDetector::Params params;
     //*params.minThreshold = 10;
@@ -342,14 +270,14 @@ int main() {
     std::vector<cv::Point2f> ps;
     std::vector<Circle> circ;
     cv::findNonZero(edge, ps);
-    int minDis = 100;
+    int minDis = 50;
     int minR = 200;
-    int maxR = 400;
-    float pixDis = 1;
+    int maxR = 300;
+    float pixDis = 2;
     float matchThresh = 15;
     float fitness = 0.5;
     int iter = 3000;
-    circ = find_circles(ps,roiImg,minDis,minR,maxR,pixDis,matchThresh,fitness);
+    circ = laserProject::find_circlesWithRansac(ps,roiImg,minDis,minR,maxR,pixDis,matchThresh,fitness);
 
     //std::sort(circ.begin(), circ.end(), compareByFitnessCircle);
     std::sort(circ.begin(), circ.end(), compareByInlierCircle);
@@ -402,41 +330,37 @@ int main() {
 
     //cv::Mat showCol;
     //cvtColor(edge, showCol, cv::COLOR_GRAY2RGB);
-    //std::vector<cv::Point> ps; 
-    //cv::findNonZero(edge, ps);
     //const int N = 1000;
     //const double minDistance = 100;
     //const float eps = 2;
     ////const float min_coverage = 0.9;
+    //std::mt19937 rng(std::time(0));
+    //std::uniform_int_distribution<unsigned long> distr(0, ps.size());
+    //
     //for (int i = 0; i < N; i++) {
     //    //select 3 points randomly
     //    cout << i <<" :  iteration start" << endl; 
-    //    cv::Point p1, p2, p3, p4, p5;
     //    std::vector<cv::Point> ellipPt(5);
     //    ellipPt[0] = ps[rand() % ps.size()];
     //    ellipPt[1] = ps[rand() % ps.size()];
     //    ellipPt[2] = ps[rand() % ps.size()];
     //    ellipPt[3] = ps[rand() % ps.size()];
     //    ellipPt[4] = ps[rand() % ps.size()];
-    //    while (1) {
-    //        if (laserProject::distancePt(ellipPt[0], ellipPt[1]) < minDistance ||
-    //            laserProject::distancePt(ellipPt[0], ellipPt[2]) < minDistance ||
-    //            laserProject::distancePt(ellipPt[0], ellipPt[3]) < minDistance ||
-    //            laserProject::distancePt(ellipPt[0], ellipPt[4]) < minDistance ||
-    //            laserProject::distancePt(ellipPt[1], ellipPt[2]) < minDistance ||
-    //            laserProject::distancePt(ellipPt[1], ellipPt[3]) < minDistance ||
-    //            laserProject::distancePt(ellipPt[1], ellipPt[4]) < minDistance ||
-    //            laserProject::distancePt(ellipPt[2], ellipPt[3]) < minDistance ||
-    //            laserProject::distancePt(ellipPt[2], ellipPt[4]) < minDistance ||
-    //            laserProject::distancePt(ellipPt[3], ellipPt[4]) < minDistance) {
-    //            ellipPt[0] = ps[rand() % ps.size()];
-    //            ellipPt[1] = ps[rand() % ps.size()];
-    //            ellipPt[2] = ps[rand() % ps.size()];
-    //            ellipPt[3] = ps[rand() % ps.size()];
-    //            ellipPt[4] = ps[rand() % ps.size()];
-    //        }
-    //        break;
-    //     }
+    //    while (norm(ellipPt[0] - ellipPt[1]) < minDistance) ellipPt[1] = ps[distr(rng)];
+
+    //    while (norm(ellipPt[0] - ellipPt[2]) < minDistance || 
+    //           norm(ellipPt[1] - ellipPt[2]) < minDistance) ellipPt[2] = ps[distr(rng)];
+
+    //    while (norm(ellipPt[0] - ellipPt[3]) < minDistance ||
+    //        norm(ellipPt[1] - ellipPt[3]) < minDistance ||
+    //        norm(ellipPt[2] - ellipPt[3]) < minDistance) ellipPt[3] = ps[distr(rng)];
+
+    //    while (norm(ellipPt[0] - ellipPt[4]) < minDistance ||
+    //        norm(ellipPt[1] - ellipPt[4]) < minDistance   ||
+    //        norm(ellipPt[2] - ellipPt[4]) < minDistance   || 
+    //        norm(ellipPt[3] - ellipPt[4]) < minDistance) ellipPt[4] = ps[distr(rng)];
+
+
     //    cv::RotatedRect myEllipse = cv::fitEllipse(ellipPt);
 
     //    ////count how many points on this circle
@@ -455,12 +379,13 @@ int main() {
     //    model_cnt mod{ myEllipse, cnt };
     //    models.push_back(mod);
     //}
+
     //std::sort(models.begin(), models.end(), compareByLength);
     ////int maxIndex = 0; 
     ////int max = models[0].counts;
     ////
-    //for (int i = models.size()-1; i > models.size()-10; i--) {
-    //    cv::ellipse(showCol, models[i].ellip, cv::Scalar(0, 255, 0),2);
+    //for (int i = models.size(); i < models.size(); i++) {
+    //    cv::ellipse(showCol, models[i].ellipse, cv::Scalar(0, 255, 0),2);
     //}
     //imshow("ellipse", showCol);
     //cv::waitKey(0);

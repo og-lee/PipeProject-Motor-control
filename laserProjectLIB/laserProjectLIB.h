@@ -7,8 +7,7 @@
 #include <cmath>
 #include <memory.h>
 #include <algorithm>
-
-
+#include "../laserProject/Circle.h" 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -78,5 +77,14 @@ namespace laserProject {
     std::vector<std::vector<cv::Point>> getContoursSortedExternal(const cv::Mat& thresholdImg);
 
     double distancePt(cv::Point pt1, cv::Point pt2);
-
+    
+    Circles find_circlesWithRansac(Point2fs& pnts, Mat img = cv::Mat(),
+        const float min_distance = 40,
+        const int min_rad = 100,
+        const int max_rad = 200,
+        const float epsilon_rad = 1.5,
+        const float match_threshold = 15,
+        const float min_fitness = 0.5,
+        const int sample_count = 1000);
+    
 }
