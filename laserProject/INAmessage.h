@@ -3,7 +3,6 @@
 #include <windows.h>
 #include "SerialPort.h"
 
-
 static const byte FUNC_RD = 0x03;
 static const byte FUNC_WR = 0x06;
 static const byte FUNC_DIAG = 0x07;

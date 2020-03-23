@@ -27,6 +27,9 @@
     <ClCompile Include="INAmessage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="laserDevice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SerialPort.h">
@@ -36,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="INAmessage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="laserDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -267,4 +267,13 @@ namespace laserProject {
         cv::threshold(result, result, minThreshold, 255, cv::THRESH_BINARY);
         cv::imshow("find the brightest part", result);
     }
+    std::vector<position> getPipePoints(const position& base,LaserRangeFinder laser_dev) {
+        // get current distance 
+        double distance = laser_dev.readDistance();
+
+        // check upward 
+        std::vector<position> a;
+        return a;
+
+    }
 }

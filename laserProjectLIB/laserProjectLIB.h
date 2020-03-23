@@ -7,6 +7,9 @@
 #include <cmath>
 #include <memory.h>
 #include <algorithm>
+#include "../laserProject/MotorController.h"
+#include "../laserProject/INAmessage.h"
+#include "../laserProject/laserDevice.h"
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -14,6 +17,11 @@
 using namespace std;
 
 namespace laserProject {
+
+    struct position {
+        double motorHor;
+        double motorVer;
+    };
 
     class myCircle {
     public:
@@ -23,6 +31,7 @@ namespace laserProject {
         ~myCircle() {}
         myCircle(const myCircle& other) :center(other.center), radius(other.radius) {}
     };
+
 
     void printMes();
     cv::Mat takeImg(cv::VideoCapture capture);
@@ -72,5 +81,7 @@ namespace laserProject {
 
     //show the laser image by thresholding 
     void checkLaser(const cv::Mat& img, int minThreshold);
+
+    std::vector<position> getPipePoints(const position& base,LaserRangeFinder laser_dev);
 
 }

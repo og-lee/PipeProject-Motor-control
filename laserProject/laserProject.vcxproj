@@ -156,6 +156,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="INAmessage.cpp" />
+    <ClCompile Include="laserDevice.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MotorController.cpp" />
     <ClCompile Include="SerialPort.cpp" />
@@ -167,6 +168,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="INAmessage.h" />
+    <ClInclude Include="laserDevice.h" />
     <ClInclude Include="MotorController.h" />
     <ClInclude Include="SerialPort.h" />
   </ItemGroup>
