@@ -16,13 +16,15 @@
 
 using namespace std;
 
+typedef struct positionData {
+    double motorHor;
+    double motorVer;
+    double dist;
+}positionData;
+
 namespace laserProject {
 
-    struct position {
-        double motorHor;
-        double motorVer;
-    };
-
+   
     class myCircle {
     public:
         cv::Point2f center;
@@ -82,6 +84,6 @@ namespace laserProject {
     //show the laser image by thresholding 
     void checkLaser(const cv::Mat& img, int minThreshold);
 
-    std::vector<position> getPipePoints(const position& base,LaserRangeFinder laser_dev);
+    std::vector<positionData> getPipePoints(const positionData& base,LaserRangeFinder laser_dev);
 
 }

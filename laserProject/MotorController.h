@@ -18,10 +18,9 @@ public:
     void close();
     bool connected()const;
     void userPort(MotorController const & motorcon);
-
+    CSerialPort m_port;
 
 protected:
-    CSerialPort m_port;
     ushort m_slaveid = 0;
     bool m_connected = false;
 };

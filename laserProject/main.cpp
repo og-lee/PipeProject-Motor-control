@@ -113,6 +113,10 @@ void main() {
     motor2.userPort(motor1);
     double a = laser_dev.readDistance() * 1000;
 
+    //std::vector<byte>returned = sendMyMessage(msg_MOVEM1, motor1.m_port);
+    std::vector<byte>returned = sendMyMessage(msg_READ_S1, motor1.m_port);
+    
+    
 
 
     //laser_dev.laserOFF();
