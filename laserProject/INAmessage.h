@@ -46,14 +46,19 @@ public:
 
 std::vector<byte> sendMyMessage(const INAmessage& msg, CSerialPort& _serial);
 void changeM0(INAmessage& msgHigh, INAmessage& msgLow, int stepsX, int stepsY);
-double readPosition(INAmessage& msg, CSerialPort& _serial);
+int readPosition(INAmessage& msg, CSerialPort& _serial);
 
 
 //S1 is hor motor 
-static INAmessage msg_MOVEM0(SLAVE2, FUNC_WR, REMOTE_LOW_REG, 0x0008,true);
+static INAmessage msg_MOVEM0(SLAVE1, FUNC_WR, REMOTE_LOW_REG, 0x0008,true);
 static INAmessage msg_MOVEM1(SLAVE1, FUNC_WR, REMOTE_LOW_REG, 0x0009,true);
+
+
+static INAmessage msg_M0(SLAVE1, FUNC_WR, REMOTE_LOW_REG, 0x0009,true);
+
 static INAmessage msg_JOGFW(SLAVE2, FUNC_WR, REMOTE_LOW_REG, 0x1000,true);
 static INAmessage msg_JOGBW(SLAVE2, FUNC_WR, REMOTE_LOW_REG, 0x2000,true);
 static INAmessage msg_STOP(SLAVE2, FUNC_WR, REMOTE_LOW_REG, 0x0020,true);
 static INAmessage msg_READ_S2(SLAVE2, FUNC_RD, READ_POS_REG_LOW,0x02,false);
 static INAmessage msg_READ_S1(SLAVE1, FUNC_RD, READ_POS_REG_LOW,0x02,false);
+

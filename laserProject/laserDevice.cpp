@@ -43,11 +43,11 @@
     }
 
     //read laser distance
-    double LaserRangeFinder::readDistance() {
+         double LaserRangeFinder::readDistance() {
         //your code here
         //returned string is "D:xx.xxx"
         //only retrieve 34.567
-        int size = 8;
+        int size = 16;
         std::vector<unsigned char> data(size);
 
         if (m_connected) {
@@ -61,7 +61,6 @@
         std::string distance = std::string(data.begin() + 2, data.begin() + 8);
         double dis = std::stod(distance);
 
-        cout << dis << endl;
         return dis;
     }
 

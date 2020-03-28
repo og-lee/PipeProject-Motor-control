@@ -272,7 +272,8 @@ namespace laserProject {
         std::vector<positionData> pickedPts;
         double distance = laser_dev.readDistance()*1000;
         double previousDis = distance;
-        double threshDis = 100;
+        double threshDis = 50;
+        double minThresh = 2;
 
         bool isLaserVisible = false;
 
@@ -280,7 +281,7 @@ namespace laserProject {
             //if the distance - current distance > threshold && 
             // also current distance and previous distance should be only less then 3mm 
             double curDistance = laser_dev.readDistance() * 1000;
-            if ((abs(distance - curDistance) > threshDis) && abs(curDistance-previousDis)<5) {
+            if ((abs(distance - curDistance) > threshDis) && abs(curDistance-previousDis)<minThresh) {
                 pickedPts.emplace_back(positionData{0,0,curDistance});
                 break;
             }
@@ -289,4 +290,23 @@ namespace laserProject {
         return pickedPts;
 
     }
+    positionData getLeftPoint(LaserRangeFinder laser_device,MotorController motor1) {
+        int horMotorPosition = readPosition(msg_READ_S1, motor1.m_port);
+        double initialDistance = laser_device.readDistance() * 1000;
+        bool isLaserVisible = true;
+        int moveDegree = 10;         // 10 is 0.1 degree
+        while (isLaserVisible) {
+            int destination = horMotorPosition - moveDegree;
+            changeM0()
+            sendMyMessage()
+            //if laser is visible move left untill it's not visible 
+
+
+            
+        }
+
+
+        return 
+    }
+
 }

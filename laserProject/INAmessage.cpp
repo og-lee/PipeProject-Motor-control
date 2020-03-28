@@ -103,10 +103,14 @@ void changeM0(INAmessage& msgHigh, INAmessage& msgLow, int stepsX, int stepsY) {
     unsigned short stepXLow = (unsigned short)(stepsX & 0xffff);
 }
 
-double readPosition(INAmessage& msg, CSerialPort& _serial) {
+int readPosition(INAmessage& msg, CSerialPort& _serial) {
     std::vector<byte> response = sendMyMessage(msg, _serial);
     // length is 8 + 9 = 17 
     // data part is 11 12 13 14 
-    
-
+    int degree = 0;            // degree is 32 bit integer
+    degree = degree | response[11] << 24; 
+    degree = degree | response[12] << 16; 
+    degree = degree | response[13] << 8;
+    degree = degree | response[14] ;
+    return degree;
 }
