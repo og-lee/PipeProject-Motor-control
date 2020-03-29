@@ -43,7 +43,7 @@
     }
 
     //read laser distance
-         double LaserRangeFinder::readDistance() {
+     double LaserRangeFinder::readDistance() {
         //your code here
         //returned string is "D:xx.xxx"
         //only retrieve 34.567

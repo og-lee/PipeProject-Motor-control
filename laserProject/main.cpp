@@ -25,21 +25,50 @@ static int absStepsY = 0;
 
 void main() {
     LaserRangeFinder laser_dev;
+
     MotorController motor1(SLAVE1);
     MotorController motor2(SLAVE2);
-    cv::Mat img;
-    cv::VideoCapture cap(0);
-    cap >> img;
-    cv::Rect2d r = cv::selectROI(img);
-
+  
     //setup laser
     laser_dev.open("\\\\.\\COM27");
     //setup motor2
     motor1.open("\\\\.\\COM26");
     motor2.userPort(motor1);
+    laser_dev.laserON();
+    cv::Mat img;
+    cv::VideoCapture cap(0);
+    cap >> img;
+    cv::Rect2d r = cv::selectROI(img);
+    std::vector<byte>returned;
 
-    //std::vector<byte>returned = sendMyMessage(msg_MOVEM1, motor1.m_port);
+    
+    
+   /* int curPos = readPosition(msg_READ_S1, motor1.m_port);
+
+    int k = -5000 + curPos;
+    changeM0_HOR(msg_DEG_HIGHM0, msg_DEG_LOWM0, k,motor1);
+    moveM0_SLAVE1(motor1.m_port);*/
+
+
+
     //std::vector<byte>returned = sendMyMessage(msg_READ_S1, motor1.m_port);
+
+    /*int horMotorPosition = readPosition(msg_READ_S1, motor1.m_port);
+    int moveDegree = 1;
+    while (1) {
+        double distanceAfterMove = laser_dev.readDistance();
+        cout << distanceAfterMove << endl;
+        int destination = horMotorPosition + moveDegree;
+        changeM0_HOR(msg_DEG_HIGHM0, msg_DEG_LOWM0, destination, motor1);
+        moveM0_SLAVE1(motor1.m_port);
+
+        horMotorPosition = destination;
+
+        char key = cv::waitKey(10);
+        if (key == 27) break;
+    }*/
+
+
     while (1) {
         cv::Mat roiImg;
         cap >> img;
@@ -47,41 +76,20 @@ void main() {
         cv::resize(roiImg, roiImg, cv::Size(), 3, 3);
         cv::imshow("img",roiImg);
         cv::waitKey(1);
-        double a = laser_dev.readDistance() * 1000;
-        double horMotorPos = (double)readPosition(msg_READ_S1, motor1.m_port) / 100;
-        double verMotorPos = (double)readPosition(msg_READ_S2, motor2.m_port) / 100;
-
-         
-        cout <<"laser distance is : "<< a << endl; 
-        cout <<"motor horizontal position is : " << horMotorPos << endl; 
-        cout << "motor verticle position is : " << verMotorPos << endl << endl;
-        /*int deg = readPosition(msg_READ_S1, motor1.m_port);
-        double val = deg / (double)100;
-        cout << val << endl;
-        Sleep(500);*/
-
         char key = cv::waitKey(10);
         if (key == 27) break;
     }
     
+    //positionData dat = laserProject::getLeftPoint(laser_dev, motor1);
+    positionData dat1 = laserProject::getRightPoint(laser_dev, motor1);
+    
+    cout << dat1.dist << endl;
+    cout << dat1.motorHor << endl;
+
+    //cout << dat.dist << endl;
+    //cout << dat.motorHor << endl;
     
 
-    /*cv::Mat img;
-    cv::Mat roiImg;
-    cv::Mat roiImgG;
-    img = cv::imread("C:/Users/oggyu/Pictures/Camera Roll/1.jpg");
-    resize(img, img,cv::Size() ,0.3, 0.3);
-    cv::Rect2d r = cv::selectROI(img);
-    roiImg = img(r);
-    cv::resize(roiImg, roiImg, cv::Size(), 2, 2);
-    cv::Canny(roiImg, roiImgG, 50, 100);
-
-
-    cv::imshow("my edges", roiImg);
-    cv::imshow("my canny", roiImgG);
-    cv::waitKey(0);*/
-    //laser_dev.laserOFF();
-
-    
+        
     return;
 }

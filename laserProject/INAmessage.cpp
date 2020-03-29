@@ -96,11 +96,32 @@ std::vector<byte> sendMyMessage(const INAmessage& msg, CSerialPort& _serial) {
 }
 
 
-void changeM0(INAmessage& msgHigh, INAmessage& msgLow, int stepsX, int stepsY) {
-    unsigned short stepYHigh = (unsigned short)(stepsY >> 16);
-    unsigned short stepYLow = (unsigned short)(stepsY & 0xffff);
-    unsigned short stepXHigh = (unsigned short)(stepsX >> 16);
-    unsigned short stepXLow = (unsigned short)(stepsX & 0xffff);
+void changeM0_HOR(INAmessage& msgHigh,
+    INAmessage& msgLow,
+    int position,
+    MotorController &motor1) {
+    //this will change the register data[2] data[3] before sendMyMessage() is called 
+    unsigned short stepXHigh = (unsigned short)(position >> 16);
+    unsigned short stepXLow = (unsigned short)(position & 0xffff);
+    msgLow.data[2] = (byte)(stepXLow >> 8);
+    msgLow.data[3] = (byte)(stepXLow & 0xff);
+
+    msgLow.source = {msgLow.Address,msgLow.Function,msgLow.data[0],msgLow.data[1],msgLow.data[2],msgLow.data[3] };
+    msgLow.CRC16 = msgLow.getCRC16(msgLow.source);
+    msgLow.CRC16H = (byte)(msgLow.CRC16 >> 8);
+    msgLow.CRC16L = (byte)(msgLow.CRC16 & 0x00ff);
+
+    msgHigh.data[2] = (byte)(stepXHigh >> 8);
+    msgHigh.data[3] = (byte)(stepXHigh & 0xff);
+    
+    msgHigh.source = { msgHigh.Address,msgHigh.Function,msgHigh.data[0],msgHigh.data[1],msgHigh.data[2],msgHigh.data[3] };
+    msgHigh.CRC16 = msgHigh.getCRC16(msgHigh.source);
+    msgHigh.CRC16H = (byte)(msgHigh.CRC16 >> 8);
+    msgHigh.CRC16L = (byte)(msgHigh.CRC16 & 0x00ff);
+
+    std::vector<byte>ret = sendMyMessage(msgHigh, motor1.m_port);
+    //sendMyMessage(msg_STOP_SLAVE1, motor1.m_port);
+    sendMyMessage(msgLow, motor1.m_port);
 }
 
 int readPosition(INAmessage& msg, CSerialPort& _serial) {
@@ -113,4 +134,22 @@ int readPosition(INAmessage& msg, CSerialPort& _serial) {
     degree = degree | response[13] << 8;
     degree = degree | response[14] ;
     return degree;
+}
+
+
+void moveM0_SLAVE1(CSerialPort& _serial) {
+    sendMyMessage(msg_STOP_SLAVE1, _serial);
+    sendMyMessage(msg_MOVEM0_SLAVE1, _serial);
+}
+
+
+bool isSlave1MotorMoving(CSerialPort& _serial) {
+    std::vector<byte> response = sendMyMessage(msg_READ_MOVE_SLAVE1, _serial);
+    int a = (response[13] >> 5) & 1;
+    if (a) { 
+        cout << "motor moving" << endl;
+        return true; 
+    }
+    cout << "motor stopped" << endl;
+    return false;
 }

@@ -292,21 +292,91 @@ namespace laserProject {
     }
     positionData getLeftPoint(LaserRangeFinder laser_device,MotorController motor1) {
         int horMotorPosition = readPosition(msg_READ_S1, motor1.m_port);
-        double initialDistance = laser_device.readDistance() * 1000;
-        bool isLaserVisible = true;
-        int moveDegree = 10;         // 10 is 0.1 degree
-        while (isLaserVisible) {
+        double initialDistance = laser_device.readDistance();
+        double previousDistance = initialDistance;
+
+        int moveDegree = 1;         // 10 is 0.1 degree
+        std::vector<positionData> storedPositions;
+
+        while (1) {
+            // destination position 
             int destination = horMotorPosition - moveDegree;
-            changeM0()
-            sendMyMessage()
-            //if laser is visible move left untill it's not visible 
 
+            //change the degree in register M0 Degree 
+            changeM0_HOR(msg_DEG_HIGHM0, msg_DEG_LOWM0, destination, motor1);
+            // move Slave1 (horrizontal motor)
+            moveM0_SLAVE1(motor1.m_port);
 
-            
+            // not moving then means stopped
+            while (isSlave1MotorMoving(motor1.m_port));
+
+            double currentDistance = laser_device.readDistance();
+
+            //if the distance from initial laser value and current is over 5mm then break
+            // else store the value 
+
+            cout << "current Horr angle : " << destination << endl;
+            cout << "current distance : " << currentDistance << endl;
+
+            int prevAndCurDifference = (currentDistance - previousDistance)*1000;
+            if (abs(prevAndCurDifference) >= 2) {
+                int index = storedPositions.size()-1;
+                return storedPositions[index];
+            }
+
+            storedPositions.emplace_back(positionData{ destination,0,currentDistance });
+            horMotorPosition = destination;
+            previousDistance = currentDistance;
+
+            //double distDiff = (currentDistance - initialDistance) * 1000;
         }
-
-
-        return 
+        return positionData{ 0,0,0 };
     }
+
+    positionData getRightPoint(LaserRangeFinder laser_device, MotorController motor1) {
+        int horMotorPosition = readPosition(msg_READ_S1, motor1.m_port);
+        double initialDistance = laser_device.readDistance();
+        double previousDistance = initialDistance;
+
+        int moveDegree = 1;         // 10 is 0.1 degree
+        std::vector<positionData> storedPositions;
+
+        while (1) {
+            // destination position 
+            int destination = horMotorPosition + moveDegree;
+
+            //change the degree in register M0 Degree 
+            changeM0_HOR(msg_DEG_HIGHM0, msg_DEG_LOWM0, destination, motor1);
+            // move Slave1 (horrizontal motor)
+            moveM0_SLAVE1(motor1.m_port);
+
+            // not moving then means stopped
+            while (isSlave1MotorMoving(motor1.m_port));
+
+            double currentDistance = laser_device.readDistance();
+
+            //if the distance from initial laser value and current is over 5mm then break
+            // else store the value 
+
+            cout << "current Horr angle : " << destination << endl;
+            cout << "current distance : " << currentDistance << endl;
+
+            int prevAndCurDifference = (currentDistance - previousDistance) * 1000;
+            if (abs(prevAndCurDifference) >= 2) {
+                int index = storedPositions.size() - 1;
+                return storedPositions[index];
+            }
+
+            storedPositions.emplace_back(positionData{ destination,0,currentDistance });
+            horMotorPosition = destination;
+            previousDistance = currentDistance;
+
+            //double distDiff = (currentDistance - initialDistance) * 1000;
+        }
+        return positionData{ 0,0,0 };
+    }
+
+
+
 
 }

@@ -17,8 +17,8 @@
 using namespace std;
 
 typedef struct positionData {
-    double motorHor;
-    double motorVer;
+    int motorHor;
+    int motorVer;
     double dist;
 }positionData;
 
@@ -85,5 +85,9 @@ namespace laserProject {
     void checkLaser(const cv::Mat& img, int minThreshold);
 
     std::vector<positionData> getPipePoints(const positionData& base,LaserRangeFinder laser_dev);
+
+
+    positionData getLeftPoint(LaserRangeFinder laser_device, MotorController motor1);
+    positionData getRightPoint(LaserRangeFinder laser_device, MotorController motor1);
 
 }
